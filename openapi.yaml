@@ -1,18 +1,15 @@
 openapi: 3.0.0
 info:
-  title: Product and Order API
+  title: Product API
   version: 1.0.0
-  description: API for managing products and orders.
-
-servers:
-  - url: /api  # Базовый URL вашего API (например, /api)
+  description: API для управления продуктами
 
 components:
   securitySchemes:
-    bearerAuth:            # Название схемы авторизации
+    bearerAuth:            # можно использовать другой способ авторизации
       type: http
       scheme: bearer
-      bearerFormat: JWT  # Предполагаем JWT, но можно изменить
+      bearerFormat: JWT
 
   schemas:
     Product:
@@ -20,68 +17,86 @@ components:
       properties:
         id:
           type: integer
-          description: Product ID (auto-generated)
+          description: Идентификатор продукта
           readOnly: true
         name:
           type: string
-          description: Product name
+          description: Название продукта
         description:
           type: string
-          description: Product description
+          description: Описание продукта
         price:
           type: number
           format: float
-          description: Product price
+          description: Цена продукта
         quantity:
           type: integer
-          description: Product quantity in stock
+          description: Количество на складе
       required:
         - name
         - description
         - price
         - quantity
 
-    Error:
-      type: object
-      properties:
-        code:
-          type: integer
-          description: HTTP status code
-        message:
-          type: string
-          description: Error message
-
     Order:
       type: object
       properties:
         id:
           type: integer
-          description: Order ID (auto-generated)
+          description: Идентификатор заказа
           readOnly: true
         customer_name:
           type: string
-          description: Customer name
+          description: Имя заказчика
         customer_email:
           type: string
-          description: Customer email
+          format: email
+          description: Email заказчика
         customer_address:
           type: string
-          description: Customer address
+          description: Адрес заказчика
         order_details:
-          type: string #Здесь может быть более сложный объект
-          description: Order details
-      required:
-        - customer_name
-        - customer_email
-        - customer_address
-        - order_details
+          type: string
+          description: Детали заказа
+
+    ProductPatch:
+      type: object
+      properties:
+        name:
+          type: string
+          description: Название продукта (для обновления)
+        description:
+          type: string
+          description: Описание продукта (для обновления)
+        price:
+          type: number
+          format: float
+          description: Цена продукта (для обновления)
+        quantity:
+          type: integer
+          description: Количество на складе (для обновления)
 
 paths:
-  /products:
+  /api/products:
+    get:
+      summary: Получить список продуктов
+      responses:
+        '200':
+          description: Список продуктов успешно возвращен.
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Product'
+        '400':
+          description: Некорректный запрос
+        '404':
+          description: Продукты не найдены
     post:
-      summary: Create a new product
       security:
-        - bearerAuth: []   # Применяем схему авторизации к этому endpoint
+        - bearerAuth: []  # Требуется авторизация
+      summary: Создать продукт
       requestBody:
         required: true
         content:
@@ -90,83 +105,48 @@ paths:
               $ref: '#/components/schemas/Product'
       responses:
         '201':
-          description: Product successfully created
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/Product'  # Возвращаем созданный продукт
+          description: Продукт успешно создан
         '400':
-          description: Bad request
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/Error'
+          description: Некорректные данные в запросе
         '401':
           description: Unauthorized
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/Error'
         '500':
-          description: Internal Server Error
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/Error'
+          description: Ошибка сервера
 
-  /products/{id}:
+  /api/products/{id}:
     get:
-      summary: Get a product by ID
+      summary: Получить продукт по ID
       parameters:
         - in: path
           name: id
           required: true
           schema:
             type: integer
-          description: Product ID
+          description: Идентификатор продукта
       responses:
         '200':
-          description: Successful operation
+          description: Успешное получение данных продукта
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/Product'
         '400':
-          description: Bad request
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/Error'
+          description: Некорректный запрос
         '401':
           description: Unauthorized
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/Error'
         '404':
-          description: Product not found
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/Error'
-        '500':
-          description: Internal Server Error
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/Error'
-
+          description: Продукт не найден
     put:
-      summary: Update an existing product
       security:
-        - bearerAuth: []   # Применяем схему авторизации к этому endpoint
+        - bearerAuth: []  # Требуется авторизация
+      summary: Обновить продукт по ID (полная замена)
       parameters:
         - in: path
           name: id
           required: true
           schema:
             type: integer
-          description: Product ID
+          description: Идентификатор продукта
       requestBody:
         required: true
         content:
@@ -175,38 +155,72 @@ paths:
               $ref: '#/components/schemas/Product'
       responses:
         '200':
-          description: Product successfully updated
+          description: Продукт успешно обновлен
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/Product'  # Возвращаем обновленный продукт
+                $ref: '#/components/schemas/Product'
         '400':
-          description: Bad request
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/Error'
+          description: Некорректные данные в запросе
         '401':
           description: Unauthorized
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/Error'
         '404':
-          description: Product not found
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/Error'
+          description: Продукт не найден
         '500':
-          description: Internal Server Error
+          description: Ошибка сервера
+    delete:
+      security:
+        - bearerAuth: []  # Требуется авторизация
+      summary: Удалить продукт по ID
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: integer
+          description: Идентификатор продукта
+      responses:
+        '200':
+          description: Продукт успешно удален
+        '400':
+          description: Некорректный запрос
+        '401':
+          description: Unauthorized
+        '404':
+          description: Продукт не найден
+    patch:
+      security:
+        - bearerAuth: []  # Требуется авторизация
+      summary: Частичное обновление продукта по ID
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: integer
+          description: Идентификатор продукта
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ProductPatch'
+      responses:
+        '200':
+          description: Продукт успешно обновлен
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/Error'
-  /orders:
+                $ref: '#/components/schemas/Product'
+        '400':
+          description: Некорректный запрос
+        '401':
+          description: Unauthorized
+        '404':
+          description: Продукт не найден
+
+  /api/orders:
     post:
-      summary: Create a new order
+      summary: Создать заказ
       requestBody:
         required: true
         content:
@@ -215,20 +229,8 @@ paths:
               $ref: '#/components/schemas/Order'
       responses:
         '201':
-          description: Order successfully created
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/Order'  # Возвращаем созданный ордер
+          description: Заказ успешно создан
         '400':
-          description: Bad request
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/Error'
-        '500':
-          description: Internal Server Error
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/Error'
+          description: Некорректные данные в запросе
+        '401':
+          description: Unauthorized
