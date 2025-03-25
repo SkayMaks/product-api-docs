@@ -4,7 +4,7 @@ info:
   description: API for managing products and orders
   version: 1.0.0
 servers:
-  - url: https://myproductsapi.free.beeceptor.com
+  - url: https://67e3044497fc65f535387590.mockapi.io/api
     description: Beeceptor mock server
 tags:
   - name: products
